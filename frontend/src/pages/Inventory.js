@@ -4,7 +4,6 @@ import {
   Row,
   Col,
   Form,
-  Table,
   Button,
   Badge,
   Card,
@@ -13,6 +12,7 @@ import {
   Alert,
 } from 'react-bootstrap';
 import { useInventory } from '../context/InventoryContext';
+import './Inventory.css';
 
 const Inventory = () => {
   const {
@@ -31,6 +31,7 @@ const Inventory = () => {
   const [alertMessage, setAlertMessage] = useState('');
   const [alertVariant, setAlertVariant] = useState('success');
   const fileInputRef = useRef(null);
+  const alertTimeoutRef = useRef(null);
 
   const [newProduct, setNewProduct] = useState({
     name: '',
@@ -49,10 +50,21 @@ const Inventory = () => {
   );
 
   const showNotification = (message, variant = 'success') => {
+    // Clear previous timer if it exists
+    if (alertTimeoutRef.current) {
+      clearTimeout(alertTimeoutRef.current);
+    }
+
+    // Show new alert
     setAlertMessage(message);
     setAlertVariant(variant);
     setShowAlert(true);
-    setTimeout(() => setShowAlert(false), 3000);
+
+    // Start fresh 2-second timer
+    alertTimeoutRef.current = setTimeout(() => {
+      setShowAlert(false);
+      alertTimeoutRef.current = null;
+    }, 3000);
   };
 
   const handleAddProduct = (e) => {
@@ -68,9 +80,9 @@ const Inventory = () => {
           sku: '',
         });
         setShowAddForm(false);
-        showNotification(`✅ Product "${newProduct.name}" added successfully!`);
+        showNotification(`Product "${newProduct.sku}" added successfully!`);
       } catch (error) {
-        showNotification(`❌ Error adding product: ${error.message}`, 'danger');
+        showNotification(`Error adding product: ${error.message}`, 'danger');
       }
     }
   };
@@ -87,20 +99,20 @@ const Inventory = () => {
         updateProduct(editingId, editProduct);
         setEditingId(null);
         setEditProduct(null);
-        showNotification('✅ Product updated successfully!');
+        showNotification('Product updated successfully!');
       } catch (error) {
-        showNotification(`❌ Error updating product: ${error.message}`, 'danger');
+        showNotification(`Error updating product: ${error.message}`, 'danger');
       }
     }
   };
 
-  const handleDeleteProduct = (id, name) => {
-    if (window.confirm(`Are you sure you want to delete "${name}"?`)) {
+  const handleDeleteProduct = (id, sku) => {
+    if (window.confirm(`Are you sure you want to delete "${sku}"?`)) {
       try {
         deleteProduct(id);
-        showNotification(`✅ Product "${name}" deleted successfully!`);
+        showNotification(`Product "${sku}" deleted successfully!`);
       } catch (error) {
-        showNotification(`❌ Error deleting product: ${error.message}`, 'danger');
+        showNotification(`Error deleting product: ${error.message}`, 'danger');
       }
     }
   };
@@ -118,9 +130,9 @@ const Inventory = () => {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      showNotification(`✅ Inventory exported successfully! (${products.length} products)`);
+      showNotification(`Inventory exported successfully! (${products.length} products)`);
     } catch (error) {
-      showNotification(`❌ Error exporting inventory: ${error.message}`, 'danger');
+      showNotification(`Error exporting inventory: ${error.message}`, 'danger');
     }
   };
 
@@ -133,13 +145,13 @@ const Inventory = () => {
       try {
         const data = JSON.parse(event.target?.result);
         importInventory(data);
-        showNotification(`✅ Inventory imported successfully! (${data.products.length} products)`);
+        showNotification(`Inventory imported successfully! (${data.products.length} products)`);
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
         }
       } catch (error) {
         showNotification(
-          `❌ Error importing inventory: Invalid JSON file`,
+          `Error importing inventory: Invalid JSON file`,
           'danger'
         );
       }
@@ -160,7 +172,13 @@ const Inventory = () => {
   return (
     <Container>
       {showAlert && (
-        <Alert variant={alertVariant} dismissible onClose={() => setShowAlert(false)} className="mb-3">
+        <Alert
+          variant={alertVariant}
+          dismissible
+          onClose={() => setShowAlert(false)}
+          className="position-fixed bottom-0 end-0 m-4"
+          style={{ zIndex: 1055 }}
+        >
           {alertMessage}
         </Alert>
       )}
@@ -309,9 +327,9 @@ const Inventory = () => {
 
       <Row>
         <Col md={12}>
-          <Card className="shadow-sm">
-            <Table hover responsive className="mb-0">
-              <thead className="table-dark">
+          <div className="inventory-table-wrapper">
+            <table className="inventory-table">
+              <thead>
                 <tr>
                   <th>Product Name</th>
                   <th>Category</th>
@@ -326,45 +344,42 @@ const Inventory = () => {
                 {filteredProducts.length > 0 ? (
                   filteredProducts.map(product => (
                     <tr key={product.id}>
-                      <td className="fw-bold">{product.name}</td>
+                      <td className="product-name">{product.name}</td>
                       <td>
                         <Badge bg={product.category === 'Plumbing' ? 'info' : 'warning'} text="dark">
                           {product.category}
                         </Badge>
                       </td>
-                      <td className="font-monospace">{product.sku}</td>
+                      <td className="sku-column">{product.sku}</td>
                       <td>{product.stock} units</td>
-                      <td className="fw-bold">${product.price.toFixed(2)}</td>
+                      <td className="price-column">${product.price.toFixed(2)}</td>
                       <td>{getStockBadge(product.stock)}</td>
-                      <td>
-                        <Button
-                          variant="outline-primary"
-                          size="sm"
-                          className="me-1"
-                          onClick={() => handleStartEdit(product)}
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          variant="outline-danger"
-                          size="sm"
-                          onClick={() => handleDeleteProduct(product.id, product.name)}
-                        >
-                          Delete
-                        </Button>
+                      <td className="actions-column">
+                          <button
+                            className="btn-edit"
+                            onClick={() => handleStartEdit(product)}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className="btn-delete"
+                            onClick={() => handleDeleteProduct(product.id, product.sku)}
+                          >
+                            Delete
+                          </button>
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="7" className="text-center py-4 text-muted">
+                    <td colSpan="7" className="no-products">
                       No products found
                     </td>
                   </tr>
                 )}
               </tbody>
-            </Table>
-          </Card>
+            </table>
+          </div>
         </Col>
       </Row>
 
