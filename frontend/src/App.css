@@ -1,3 +1,9 @@
+*{
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 .App {
   min-height: 100vh;
   display: flex;
@@ -9,7 +15,7 @@ main {
 }
 
 /* Custom styles for tables */
-.table {
+/* .table {
   background-color: white;
 }
 
@@ -21,7 +27,7 @@ main {
 
 .table tbody tr:hover {
   background-color: #f8f9fa;
-}
+} */
 
 /* Card hover effects */
 .card {

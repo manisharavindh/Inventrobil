@@ -1,16 +1,4 @@
 import React, { useState, useRef } from 'react';
-import {
-  Container,
-  Row,
-  Col,
-  Form,
-  Button,
-  Badge,
-  Card,
-  InputGroup,
-  Modal,
-  Alert,
-} from 'react-bootstrap';
 import { useInventory } from '../context/InventoryContext';
 import './Inventory.css';
 
@@ -50,21 +38,11 @@ const Inventory = () => {
   );
 
   const showNotification = (message, variant = 'success') => {
-    // Clear previous timer if it exists
-    if (alertTimeoutRef.current) {
-      clearTimeout(alertTimeoutRef.current);
-    }
-
-    // Show new alert
+    if (alertTimeoutRef.current) clearTimeout(alertTimeoutRef.current);
     setAlertMessage(message);
     setAlertVariant(variant);
     setShowAlert(true);
-
-    // Start fresh 2-second timer
-    alertTimeoutRef.current = setTimeout(() => {
-      setShowAlert(false);
-      alertTimeoutRef.current = null;
-    }, 3000);
+    alertTimeoutRef.current = setTimeout(() => setShowAlert(false), 2000);
   };
 
   const handleAddProduct = (e) => {
@@ -72,13 +50,7 @@ const Inventory = () => {
     if (newProduct.name && newProduct.stock && newProduct.price && newProduct.sku) {
       try {
         addProduct(newProduct);
-        setNewProduct({
-          name: '',
-          category: 'Plumbing',
-          stock: '',
-          price: '',
-          sku: '',
-        });
+        setNewProduct({ name: '', category: 'Plumbing', stock: '', price: '', sku: '' });
         setShowAddForm(false);
         showNotification(`Product "${newProduct.sku}" added successfully!`);
       } catch (error) {
@@ -120,16 +92,13 @@ const Inventory = () => {
   const handleExportInventory = () => {
     try {
       const data = exportInventory();
-      const jsonString = JSON.stringify(data, null, 2);
-      const blob = new Blob([jsonString], { type: 'application/json' });
-      const url = window.URL.createObjectURL(blob);
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.download = `inventory_${new Date().toISOString().split('T')[0]}.json`;
-      document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      URL.revokeObjectURL(url);
       showNotification(`Inventory exported successfully! (${products.length} products)`);
     } catch (error) {
       showNotification(`Error exporting inventory: ${error.message}`, 'danger');
@@ -143,315 +112,157 @@ const Inventory = () => {
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
-        const data = JSON.parse(event.target?.result);
+        const data = JSON.parse(event.target.result);
         importInventory(data);
         showNotification(`Inventory imported successfully! (${data.products.length} products)`);
-        if (fileInputRef.current) {
-          fileInputRef.current.value = '';
-        }
-      } catch (error) {
-        showNotification(
-          `Error importing inventory: Invalid JSON file`,
-          'danger'
-        );
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      } catch {
+        showNotification('Error importing inventory: Invalid JSON file', 'danger');
       }
     };
     reader.readAsText(file);
   };
 
-  const handleImportClick = () => {
-    fileInputRef.current?.click();
-  };
+  const handleImportClick = () => fileInputRef.current?.click();
 
   const getStockBadge = (stock) => {
-    if (stock < 10) return <Badge bg="danger">Low Stock</Badge>;
-    if (stock < 20) return <Badge bg="warning" text="dark">Medium</Badge>;
-    return <Badge bg="success">In Stock</Badge>;
+    if (stock < 10) return <span className="badge badge-danger">Low</span>;
+    if (stock < 20) return <span className="badge badge-warning">Medium</span>;
+    return <span className="badge badge-success">In Stock</span>;
   };
 
   return (
-    <Container>
+    <div className="inventory-container">
       {showAlert && (
-        <Alert
-          variant={alertVariant}
-          dismissible
-          onClose={() => setShowAlert(false)}
-          className="position-fixed bottom-0 end-0 m-4"
-          style={{ zIndex: 1055 }}
-        >
+        <div className={`alert ${alertVariant}`}>
           {alertMessage}
-        </Alert>
+        </div>
       )}
 
-      <Row className="mb-4">
-        <Col md={6}>
-          <h2 className="mb-0">Inventory Management</h2>
-        </Col>
-        <Col md={6} className="text-end">
-          <Button
-            variant="success"
-            className="me-2"
-            size="sm"
-            onClick={handleExportInventory}
-          >
-            Export JSON
-          </Button>
-          <Button
-            variant="info"
-            className="me-2"
-            size="sm"
-            onClick={handleImportClick}
-          >
-            Import JSON
-          </Button>
-          <Button
-            variant={showAddForm ? 'danger' : 'primary'}
+      <div className="inventory-header">
+        <h2>Inventory Management</h2>
+        <div className="inventory-actions">
+          <button className="btn btn-secondary" onClick={handleExportInventory}>Export JSON</button>
+          <button className="btn btn-secondary" onClick={handleImportClick}>Import JSON</button>
+          <button
+            className={`btn ${showAddForm ? 'btn-cancel' : 'btn-primary'}`}
             onClick={() => setShowAddForm(!showAddForm)}
-            size="sm"
           >
             {showAddForm ? 'Cancel' : 'Add Product'}
-          </Button>
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleImportInventory}
-            accept=".json"
-            style={{ display: 'none' }}
-          />
-        </Col>
-      </Row>
+          </button>
+          <input type="file" ref={fileInputRef} onChange={handleImportInventory} accept=".json" style={{ display: 'none' }} />
+        </div>
+      </div>
 
       {showAddForm && (
-        <Card className="mb-4 border-primary">
-          <Card.Body>
-            <h5 className="mb-3">Add New Product</h5>
-            <Form onSubmit={handleAddProduct}>
-              <Row>
-                <Col md={6} className="mb-3">
-                  <Form.Group>
-                    <Form.Label>Product Name</Form.Label>
-                    <Form.Control
-                      type="text"
-                      placeholder="Enter product name"
-                      value={newProduct.name}
-                      onChange={(e) =>
-                        setNewProduct({ ...newProduct, name: e.target.value })
-                      }
-                      required
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={6} className="mb-3">
-                  <Form.Group>
-                    <Form.Label>SKU</Form.Label>
-                    <Form.Control
-                      type="text"
-                      placeholder="Enter SKU"
-                      value={newProduct.sku}
-                      onChange={(e) =>
-                        setNewProduct({ ...newProduct, sku: e.target.value })
-                      }
-                      required
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
-              <Row>
-                <Col md={4} className="mb-3">
-                  <Form.Group>
-                    <Form.Label>Category</Form.Label>
-                    <Form.Select
-                      value={newProduct.category}
-                      onChange={(e) =>
-                        setNewProduct({ ...newProduct, category: e.target.value })
-                      }
-                    >
-                      <option>Plumbing</option>
-                      <option>Electronics</option>
-                    </Form.Select>
-                  </Form.Group>
-                </Col>
-                <Col md={4} className="mb-3">
-                  <Form.Group>
-                    <Form.Label>Stock</Form.Label>
-                    <Form.Control
-                      type="number"
-                      placeholder="Enter stock quantity"
-                      value={newProduct.stock}
-                      onChange={(e) =>
-                        setNewProduct({ ...newProduct, stock: e.target.value })
-                      }
-                      required
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={4} className="mb-3">
-                  <Form.Group>
-                    <Form.Label>Price ($)</Form.Label>
-                    <Form.Control
-                      type="number"
-                      placeholder="Enter price"
-                      value={newProduct.price}
-                      onChange={(e) =>
-                        setNewProduct({ ...newProduct, price: e.target.value })
-                      }
-                      step="0.01"
-                      required
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
-              <Button variant="success" type="submit" className="me-2">
-                Save Product
-              </Button>
-            </Form>
-          </Card.Body>
-        </Card>
+        <form className="form-card" onSubmit={handleAddProduct}>
+          <h4>Add New Product</h4>
+          <div className="form-grid">
+            <input
+              type="text"
+              placeholder="Product Name"
+              value={newProduct.name}
+              onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
+              required
+            />
+            <input
+              type="text"
+              placeholder="SKU"
+              value={newProduct.sku}
+              onChange={(e) => setNewProduct({ ...newProduct, sku: e.target.value })}
+              required
+            />
+            <select value={newProduct.category} onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}>
+              <option>Plumbing</option>
+              <option>Electronics</option>
+            </select>
+            <input
+              type="number"
+              placeholder="Stock"
+              value={newProduct.stock}
+              onChange={(e) => setNewProduct({ ...newProduct, stock: e.target.value })}
+              required
+            />
+            <input
+              type="number"
+              placeholder="Price ($)"
+              value={newProduct.price}
+              onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
+              step="0.01"
+              required
+            />
+          </div>
+          <button className="btn btn-primary w-full" type="submit">Save Product</button>
+        </form>
       )}
 
-      <Row className="mb-4">
-        <Col md={6}>
-          <InputGroup>
-            <InputGroup.Text>🔍</InputGroup.Text>
-            <Form.Control
-              placeholder="Search by product name or SKU..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </InputGroup>
-        </Col>
-        <Col md={6} className="text-end text-muted">
-          Showing {filteredProducts.length} of {products.length} products
-        </Col>
-      </Row>
+      <div className="inventory-search">
+        <span className="searchIcon">🔍</span>
+        <input
+          type="text"
+          placeholder="Search by name or sku..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <span className="product-count">{filteredProducts.length}/{products.length}</span>
+      </div>
 
-      <Row>
-        <Col md={12}>
-          <div className="inventory-table-wrapper">
-            <table className="inventory-table">
-              <thead>
-                <tr>
-                  <th>Product Name</th>
-                  <th>Category</th>
-                  <th>SKU</th>
-                  <th>Stock</th>
-                  <th>Price</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredProducts.length > 0 ? (
-                  filteredProducts.map(product => (
-                    <tr key={product.id}>
-                      <td className="product-name">{product.name}</td>
-                      <td>
-                        <Badge bg={product.category === 'Plumbing' ? 'info' : 'warning'} text="dark">
-                          {product.category}
-                        </Badge>
-                      </td>
-                      <td className="sku-column">{product.sku}</td>
-                      <td>{product.stock} units</td>
-                      <td className="price-column">${product.price.toFixed(2)}</td>
-                      <td>{getStockBadge(product.stock)}</td>
-                      <td className="actions-column">
-                          <button
-                            className="btn-edit"
-                            onClick={() => handleStartEdit(product)}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            className="btn-delete"
-                            onClick={() => handleDeleteProduct(product.id, product.sku)}
-                          >
-                            Delete
-                          </button>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="7" className="no-products">
-                      No products found
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </Col>
-      </Row>
+      <div className="inventory-table-wrapper">
+        <table className="inventory-table striped">
+          <thead>
+            <tr>
+              <th>Product Name</th>
+              <th>Category</th>
+              <th>SKU</th>
+              <th>Stock</th>
+              <th>Price</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredProducts.length > 0 ? filteredProducts.map(product => (
+              <tr key={product.id}>
+                <td className='product-name'>{product.name}</td>
+                <td>{product.category}</td>
+                <td className="sku-column">{product.sku}</td>
+                <td>{product.stock}</td>
+                <td className='price-column'>${product.price.toFixed(2)}</td>
+                <td>{getStockBadge(product.stock)}</td>
+                <td className="actions-column">
+                  <button className="btn-edit" onClick={() => handleStartEdit(product)}>Edit</button>
+                  <button className="btn-delete" onClick={() => handleDeleteProduct(product.id, product.sku)}>Delete</button>
+                </td>
+              </tr>
+            )) : (
+              <tr>
+                <td colSpan="7" className="no-products">No products found</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
 
       {/* Edit Modal */}
-      <Modal show={editingId !== null} onHide={() => setEditingId(null)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Edit Product</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {editProduct && (
-            <Form onSubmit={handleUpdateProduct}>
-              <Form.Group className="mb-3">
-                <Form.Label>Product Name</Form.Label>
-                <Form.Control
-                  type="text"
-                  value={editProduct.name}
-                  onChange={(e) =>
-                    setEditProduct({ ...editProduct, name: e.target.value })
-                  }
-                />
-              </Form.Group>
-              <Form.Group className="mb-3">
-                <Form.Label>SKU</Form.Label>
-                <Form.Control
-                  type="text"
-                  value={editProduct.sku}
-                  onChange={(e) =>
-                    setEditProduct({ ...editProduct, sku: e.target.value })
-                  }
-                />
-              </Form.Group>
-              <Form.Group className="mb-3">
-                <Form.Label>Category</Form.Label>
-                <Form.Select
-                  value={editProduct.category}
-                  onChange={(e) =>
-                    setEditProduct({ ...editProduct, category: e.target.value })
-                  }
-                >
-                  <option>Plumbing</option>
-                  <option>Electronics</option>
-                </Form.Select>
-              </Form.Group>
-              <Form.Group className="mb-3">
-                <Form.Label>Stock</Form.Label>
-                <Form.Control
-                  type="number"
-                  value={editProduct.stock}
-                  onChange={(e) =>
-                    setEditProduct({ ...editProduct, stock: e.target.value })
-                  }
-                />
-              </Form.Group>
-              <Form.Group className="mb-3">
-                <Form.Label>Price ($)</Form.Label>
-                <Form.Control
-                  type="number"
-                  value={editProduct.price}
-                  onChange={(e) =>
-                    setEditProduct({ ...editProduct, price: e.target.value })
-                  }
-                  step="0.01"
-                />
-              </Form.Group>
-              <Button variant="primary" type="submit" className="w-100">
-                Update Product
-              </Button>
-            </Form>
-          )}
-        </Modal.Body>
-      </Modal>
-    </Container>
+      {editingId !== null && editProduct && (
+        <div className="modal-overlay" onClick={() => setEditingId(null)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <h4>Edit Product</h4>
+            <form onSubmit={handleUpdateProduct}>
+              <input type="text" value={editProduct.name} onChange={(e) => setEditProduct({ ...editProduct, name: e.target.value })} />
+              <input type="text" value={editProduct.sku} onChange={(e) => setEditProduct({ ...editProduct, sku: e.target.value })} />
+              <select value={editProduct.category} onChange={(e) => setEditProduct({ ...editProduct, category: e.target.value })}>
+                <option>Plumbing</option>
+                <option>Electronics</option>
+              </select>
+              <input type="number" value={editProduct.stock} onChange={(e) => setEditProduct({ ...editProduct, stock: e.target.value })} />
+              <input type="number" value={editProduct.price} step="0.01" onChange={(e) => setEditProduct({ ...editProduct, price: e.target.value })} />
+              <button className="btn btn-primary w-full" type="submit">Update Product</button>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 
