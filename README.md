@@ -1,134 +1,73 @@
-# 🛠️ Plumbing & Electronics Shop Management System
+# InventroBil Web - Jinja2 Server-Side Version
 
-## Overview
-This is a robust, web-based application designed to streamline operations for plumbing and electronics retail shops. It serves as a comprehensive solution for managing inventory, processing sales (billing), and tracking financial performance.
+This is a 1-to-1 copy of the React frontend converted to Jinja2 templates for server-side rendering.
 
-The system is built to be **scalable**, **user-friendly**, and efficient, minimizing manual data entry for shop owners and staff.
+## Directory Structure
 
-## 🚀 Key Features
+```
+jj2/
+├── templates/
+│   ├── base.html          # Base template with layout
+│   ├── header.html        # Navigation header component
+│   ├── home.html          # Home page
+│   ├── inventory.html     # Inventory management page
+│   └── billing.html       # Billing & POS page
+├── static/
+│   ├── css/
+│   │   ├── index.css      # Global styles (equivalent to index.css)
+│   │   ├── app.css        # App styles (equivalent to App.css)
+│   │   └── inventory.css  # Inventory page styles
+│   └── js/
+│       └── inventory-context.js  # Client-side state management
+└── public/
+    └── index.html         # HTML entry point
+```
 
-### 1. 📦 Inventory Management
-* **Real-time Tracking:** Monitor stock levels for thousands of items (pipes, wires, switches, etc.).
-* **Low Stock Alerts:** Automatic notifications when items need restocking.
-* **Category Management:** Organize products by type (Plumbing vs. Electronics).
+## Features
 
-### 2. 🖼️ Smart Auto-Image Fetching
-* **Dual Mode:** Administrators can manually upload product photos.
-* **Auto-Fill:** If no image is uploaded, the system automatically searches the web based on the product name and attaches a relevant image to the inventory entry.
+- **Home Page**: Dashboard with statistics (total products, low stock items, transactions, revenue)
+- **Inventory Management**: Add, edit, delete, search products; import/export JSON
+- **Billing & POS**: Shopping cart with products, quantity management, discounts, GST calculations
+- **Data Persistence**: LocalStorage for products and billing history
+- **Responsive Design**: Bootstrap 5 for responsive UI
+- **State Management**: Client-side JavaScript state management via `inventory-context.js`
 
-### 3. 🧾 Billing & POS (Point of Sale)
-* **Fast Checkout:** Quick search and add-to-cart functionality.
-* **Auto-Calculation:** Automatically calculates subtotals, taxes (GST), discounts, and grand totals.
-* **Invoice Generation:** Generates professional, printable PDF receipts.
+## Technologies
 
-### 4. 📊 Analytics & Reporting
-* **Sales Dashboard:** View daily and monthly revenue graphs.
-* **Profit Tracking:** Calculate profit margins based on cost vs. selling price.
+- Jinja2 Templates
+- Bootstrap 5
+- Vanilla JavaScript (ES6+)
+- LocalStorage API
 
-## 💻 Tech Stack
-* **Backend:** Python (Flask/Django) or Node.js
-* **Frontend:** React.js / HTML5 & Bootstrap
-* **Database:** PostgreSQL / SQLite
-* **Image API:** Google Custom Search API / Bing Search API
+## API Endpoints (Required Backend)
 
-## 🔧 Getting Started (Simple Setup)
+The templates expect the following API endpoints to be implemented:
 
-1.  **Clone the Repository**
-    ```bash
-    git clone https://github.com/yourusername/inventrobil-web.git
-    ```
+- `GET /` - Render home page
+- `GET /inventory` - Render inventory page
+- `GET /billing` - Render billing page
+- `GET /api/products` - Get all products
+- `POST /api/product` - Add new product
+- `PUT /api/product/<id>` - Update product
+- `DELETE /api/product/<id>` - Delete product
+- `POST /api/billing` - Add billing record
+- `GET /api/export` - Export inventory as JSON
+- `POST /api/import` - Import inventory from JSON
 
-2.  **Frontend Setup**
-    Navigate to the frontend folder and install dependencies.
-    ```bash
-    cd frontend
-    npm install
-    npm start
-    ```
+## Implementation Notes
 
-3.  **Backend Setup** (Future)
-    The backend will be implemented in Python with Flask.
+This Jinja2 version maintains 100% feature parity with the React version:
+- All UI elements are identical
+- Same styling and animations
+- Same functionality and user interactions
+- Same data structure for products and billing records
+- Same localStorage persistence strategy
 
-4.  **Access the Web App**
-    Open your browser and navigate to `http://localhost:3000`.
+## Sample Data
 
-## 📝 Usage
-* **Login:** Use the Admin credentials to access the dashboard.
-* **Add Stock:** Navigate to "Inventory" > "Add Product". Try adding a product name without an image to see the auto-fetch feature in action!
-* **Billing:** Go to "New Sale" to process a customer order.
-
----
-**Status:** In Development
-**License:** MIT
-
-
-<!-- # Getting Started with Create React App
-
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
-
-## Available Scripts
-
-In the project directory, you can run:
-
-### `npm start`
-
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
-
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
-
-### `npm test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify) -->
+The app comes with 5 sample products:
+1. PVC Pipe 1/2 inch (Plumbing)
+2. Copper Wire 2.5mm (Electronics)
+3. Switch Socket (Electronics)
+4. PVC Pipe 1 inch (Plumbing)
+5. Electrical Box (Electronics)

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Home - InventroBil Web{% endblock %}
+
+{% block content %}
+<div>
+    <div class="row mb-5 mt-5">
+        <div class="col-md-12">
+            <div class="text-center">
+                <h1 class="display-4 fw-bold mb-3">Welcome to InventroBil Web</h1>
+                <a href="/inventory" class="btn btn-primary btn-lg me-3">Manage Inventory</a>
+                <a href="/billing" class="btn btn-success btn-lg">Start Billing</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Section -->
+    <div class="row mb-5">
+        <div class="col-md-3 mb-3">
+            <div class="card text-center shadow-sm">
+                <div class="card-body">
+                    <h3 class="text-primary fw-bold">{{ total_products }}</h3>
+                    <p class="text-muted mb-0">Total Products</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center shadow-sm">
+                <div class="card-body">
+                    <h3 class="text-warning fw-bold">{{ low_stock_count }}</h3>
+                    <p class="text-muted mb-0">Low Stock Items</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center shadow-sm">
+                <div class="card-body">
+                    <h3 class="text-success fw-bold">{{ total_transactions }}</h3>
+                    <p class="text-muted mb-0">Transactions Today</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center shadow-sm">
+                <div class="card-body">
+                    <h3 class="text-info fw-bold">${{ "%.2f"|format(total_revenue) }}</h3>
+                    <p class="text-muted mb-0">Total Revenue</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

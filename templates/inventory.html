@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+
+{% block title %}Inventory Management - InventroBil Web{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/inventory.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    {% if show_alert %}
+    <div class="alert alert-{{ alert_variant }} alert-dismissible fade show position-fixed bottom-0 end-0 m-3" role="alert" style="z-index: 1050;">
+        {{ alert_message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Inventory Management</h2>
+        <div class="d-flex gap-2">
+            <button class="btn btn-secondary rounded" onclick="exportInventory()">Export JSON</button>
+            <button class="btn btn-secondary rounded" onclick="document.getElementById('importFile').click()">Import JSON</button>
+            <button class="btn btn-primary rounded" onclick="toggleAddForm()">Add Product</button>
+            <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importInventory(event)">
+        </div>
+    </div>
+
+    {% if show_add_form %}
+    <form class="card shadow-sm mb-4" onsubmit="handleAddProduct(event)">
+        <div class="card-body">
+            <h5 class="card-title">Add New Product</h5>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <input type="text" class="form-control" placeholder="Product Name" id="newProductName" required>
+                </div>
+                <div class="col-md-6">
+                    <input type="text" class="form-control" placeholder="SKU" id="newProductSku" required>
+                </div>
+                <div class="col-md-6">
+                    <select class="form-select" id="newProductCategory">
+                        <option>Plumbing</option>
+                        <option>Electronics</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <input type="number" class="form-control" placeholder="Stock" id="newProductStock" required>
+                </div>
+                <div class="col-md-6">
+                    <input type="number" class="form-control" placeholder="Price ($)" id="newProductPrice" step="0.01" required>
+                </div>
+                <div class="col-md-6">
+                    <button class="btn btn-primary w-100" type="submit">Save Product</button>
+                </div>
+            </div>
+        </div>
+    </form>
+    {% endif %}
+
+    <div class="input-group mb-4">
+        <span class="input-group-text">🔍</span>
+        <input type="text" class="form-control" placeholder="Search by name or sku..." id="searchInventory" onkeyup="filterInventory()">
+        <span class="input-group-text"><span id="filteredCount">{{ products|length }}</span>/<span id="totalCount">{{ products|length }}</span></span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>Product Name</th>
+                    <th>Category</th>
+                    <th>SKU</th>
+                    <th>Stock</th>
+                    <th>Price</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="inventoryTableBody">
+                {% for product in products %}
+                <tr data-product-id="{{ product.id }}">
+                    <td class="fw-medium">{{ product.name }}</td>
+                    <td>{{ product.category }}</td>
+                    <td><code>{{ product.sku }}</code></td>
+                    <td>{{ product.stock }}</td>
+                    <td class="fw-medium">${{ "%.2f"|format(product.price) }}</td>
+                    <td>
+                        {% if product.stock < 10 %}
+                        <span class="badge bg-danger">Low</span>
+                        {% elif product.stock < 20 %}
+                        <span class="badge bg-warning text-dark">Medium</span>
+                        {% else %}
+                        <span class="badge bg-success">In Stock</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary me-2" onclick="editProduct({{ product.id }})">Edit</button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteProduct({{ product.id }}, '{{ product.sku }}')">Delete</button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-3">No products found</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal" id="editModal" tabindex="-1" style="display: none;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Product</h5>
+                <button type="button" class="btn-close" onclick="closeEditModal()"></button>
+            </div>
+            <form onsubmit="handleUpdateProduct(event)">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <input type="text" class="form-control" id="editProductName">
+                    </div>
+                    <div class="mb-3">
+                        <input type="text" class="form-control" id="editProductSku">
+                    </div>
+                    <div class="mb-3">
+                        <select class="form-select" id="editProductCategory">
+                            <option>Plumbing</option>
+                            <option>Electronics</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <input type="number" class="form-control" id="editProductStock">
+                    </div>
+                    <div class="mb-3">
+                        <input type="number" class="form-control" id="editProductPrice" step="0.01">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+                    <button class="btn btn-primary" type="submit">Update Product</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .modal.show {
+        display: block;
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+</style>
+
+<script>
+    // Modal background when shown
+    document.getElementById('editModal').addEventListener('show.bs.modal', function() {
+        this.style.display = 'block';
+    });
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let allProducts = {{ products|tojson }};
+    let editingProductId = null;
+
+    function toggleAddForm() {
+        const form = document.querySelector('form');
+        if (form) {
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        }
+    }
+
+    function filterInventory() {
+        const search = document.getElementById('searchInventory').value.toLowerCase();
+        const rows = document.querySelectorAll('#inventoryTableBody tr');
+        let visibleCount = 0;
+        
+        rows.forEach(row => {
+            const name = row.querySelector('td:nth-child(1)')?.textContent.toLowerCase() || '';
+            const sku = row.querySelector('td:nth-child(3)')?.textContent.toLowerCase() || '';
+            const match = name.includes(search) || sku.includes(search);
+            row.style.display = match ? '' : 'none';
+            if (match) visibleCount++;
+        });
+        
+        document.getElementById('filteredCount').textContent = visibleCount;
+    }
+
+    function editProduct(id) {
+        editingProductId = id;
+        const product = allProducts.find(p => p.id === id);
+        if (product) {
+            document.getElementById('editProductName').value = product.name;
+            document.getElementById('editProductSku').value = product.sku;
+            document.getElementById('editProductCategory').value = product.category;
+            document.getElementById('editProductStock').value = product.stock;
+            document.getElementById('editProductPrice').value = product.price;
+            document.getElementById('editModal').style.display = 'block';
+            document.getElementById('editModal').classList.add('show');
+        }
+    }
+
+    function closeEditModal() {
+        document.getElementById('editModal').style.display = 'none';
+        document.getElementById('editModal').classList.remove('show');
+        editingProductId = null;
+    }
+
+    function deleteProduct(id, sku) {
+        if (confirm(`Are you sure you want to delete "${sku}"?`)) {
+            fetch(`/api/product/${id}`, { method: 'DELETE' })
+                .then(() => location.reload())
+                .catch(err => alert('Error deleting product'));
+        }
+    }
+
+    function handleAddProduct(e) {
+        e.preventDefault();
+        const product = {
+            name: document.getElementById('newProductName').value,
+            sku: document.getElementById('newProductSku').value,
+            category: document.getElementById('newProductCategory').value,
+            stock: parseInt(document.getElementById('newProductStock').value),
+            price: parseFloat(document.getElementById('newProductPrice').value)
+        };
+        
+        fetch('/api/product', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(product)
+        }).then(() => location.reload())
+          .catch(err => alert('Error adding product'));
+    }
+
+    function handleUpdateProduct(e) {
+        e.preventDefault();
+        const product = {
+            name: document.getElementById('editProductName').value,
+            sku: document.getElementById('editProductSku').value,
+            category: document.getElementById('editProductCategory').value,
+            stock: parseInt(document.getElementById('editProductStock').value),
+            price: parseFloat(document.getElementById('editProductPrice').value)
+        };
+        
+        fetch(`/api/product/${editingProductId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(product)
+        }).then(() => location.reload())
+          .catch(err => alert('Error updating product'));
+    }
+
+    function exportInventory() {
+        fetch('/api/export')
+            .then(r => r.json())
+            .then(data => {
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `inventory_${new Date().toISOString().split('T')[0]}.json`;
+                link.click();
+                URL.revokeObjectURL(url);
+            });
+    }
+
+    function importInventory(e) {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const data = JSON.parse(event.target.result);
+                fetch('/api/import', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                }).then(() => location.reload())
+                  .catch(err => alert('Error importing inventory'));
+            } catch {
+                alert('Error: Invalid JSON file');
+            }
+        };
+        reader.readAsText(file);
+    }
+</script>
+{% endblock %}
