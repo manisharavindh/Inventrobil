@@ -100,6 +100,13 @@ def add_billing_record():
         response_record['items'] = data['items'] # Echo back what was sent + ID updates if any
         response_record['id'] = timestamp_id
         
+        # DEMO USER: Save to session because DB transaction will be rolled back
+        if session.get('user') and session['user'].get('username') == 'demo':
+            session['demo_invoice'] = {
+                'record': response_record,
+                'items': data['items']
+            }
+
         return jsonify(response_record), 201
         
     except Exception as e:
@@ -117,6 +124,46 @@ def get_billing_history():
 @cashier_required
 def download_invoice(record_id):
     """Generate and download invoice PDF"""
+    
+    # DEMO USER: Retrieve from session
+    if session.get('user') and session['user'].get('username') == 'demo':
+        demo_data = session.get('demo_invoice')
+        # Check if we have data and it matches the requested ID
+        # Note: record_id is an integer (timestamp_id)
+        if demo_data and int(demo_data['record']['id']) == record_id:
+             from types import SimpleNamespace
+             
+             r_data = demo_data['record']
+             # Create a mock object expected by generate_invoice_pdf
+             r_obj = SimpleNamespace(**r_data)
+             
+             # Restore datetime object (to_dict converts to string)
+             if isinstance(r_obj.timestamp, str):
+                 try:
+                     r_obj.timestamp = datetime.fromisoformat(r_obj.timestamp)
+                 except ValueError:
+                     r_obj.timestamp = datetime.now() # Fallback
+
+             # Record needs 'created_by' which is in to_dict as 'created_by'
+             # It also needs 'id' which is in to_dict (timestamp_id)
+             # It needs subtotal, discount, etc. All in to_dict.
+             
+             items = demo_data['items']
+             # generate_invoice_pdf can handle dict items (checked in utils.py)
+             
+             pdf_buffer = generate_invoice_pdf(r_obj, items)
+             
+             return send_file(
+                pdf_buffer,
+                as_attachment=True,
+                download_name=f'invoice_{record_id}.pdf',
+                mimetype='application/pdf'
+            )
+        # If not found in session, fall through? Or return 404?
+        # If we fall through, DB query will fail (because of rollback).
+        # So we might as well fall through and let it 404 naturally if logic fails.
+        # But if logic is correct, we return here.
+
     # record_id here is actually the timestamp_id passed from frontend
     record = BillingRecord.query.filter_by(timestamp_id=record_id).first_or_404()
     # Items are linked by the DB primary key, not timestamp_id

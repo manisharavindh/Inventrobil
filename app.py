@@ -55,6 +55,16 @@ def create_app(config_class=Config):
         db.create_all()
         create_default_admin(app)
 
+    @app.before_request
+    def sandbox_mode():
+        """Ensure demo user changes are not committed"""
+        if session.get('user') and session['user'].get('username') == 'demo':
+            # Patch the current session's commit to only flush
+            # This simulates success but never writes to disk permanently
+            # The transaction will be rolled back when the session is removed at end of request
+            current_session = db.session()
+            current_session.commit = current_session.flush
+
     # Template Filters
     @app.template_filter('pluralize_unit')
     def pluralize_unit(unit, quantity):
