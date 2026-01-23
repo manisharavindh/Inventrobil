@@ -4,6 +4,16 @@
 
 {% block content %}
 <div class="fade-in">
+    {% if session['user']['username'] == 'demo' %}
+    <div class="alert alert-warning border-0 shadow-sm rounded-4 mb-4 d-flex align-items-center">
+        <i class="bi bi-exclamation-triangle-fill me-3 fs-4"></i>
+        <div>
+            <h5 class="alert-heading fw-bold mb-1">Demo Mode</h5>
+            <p class="mb-0">You are currently using the limited Demo version. Any changes made will not be permanently
+                saved.</p>
+        </div>
+    </div>
+    {% endif %}
     <!-- Welcome Section -->
     <div class="card shadow border-0 rounded-4 mb-4">
         <div class="card-body p-4">

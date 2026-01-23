@@ -134,8 +134,17 @@ def download_invoice(record_id):
              from types import SimpleNamespace
              
              r_data = demo_data['record']
+             
+             # Map camelCase keys back to snake_case for SimpleNamespace attribute access 
+             # because generate_invoice_pdf expects snake_case attributes
+             mapped_data = r_data.copy()
+             mapped_data['discount_percent'] = r_data.get('discountPercent', 0)
+             mapped_data['discount_amount'] = r_data.get('discountAmount', 0)
+             mapped_data['gst_rate'] = r_data.get('gstRate', 0)
+             mapped_data['gst_amount'] = r_data.get('gstAmount', 0)
+             
              # Create a mock object expected by generate_invoice_pdf
-             r_obj = SimpleNamespace(**r_data)
+             r_obj = SimpleNamespace(**mapped_data)
              
              # Restore datetime object (to_dict converts to string)
              if isinstance(r_obj.timestamp, str):
@@ -146,7 +155,7 @@ def download_invoice(record_id):
 
              # Record needs 'created_by' which is in to_dict as 'created_by'
              # It also needs 'id' which is in to_dict (timestamp_id)
-             # It needs subtotal, discount, etc. All in to_dict.
+             # generate_invoice_pdf uses record.id, which maps to mapped_data['id'] (timestamp_id)
              
              items = demo_data['items']
              # generate_invoice_pdf can handle dict items (checked in utils.py)

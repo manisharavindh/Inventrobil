@@ -30,6 +30,27 @@ def login():
     
     return render_template('login.html')
 
+@auth_bp.route('/demo')
+def demo_login():
+    """Auto-login for demo user"""
+    user = User.query.filter_by(username='demo').first()
+    
+    if not user:
+        # Create demo user if not exists
+        user = User(
+            username='demo',
+            password=hash_password('demo'),
+            role='Owner', # Full access
+            email='demo@inventrobil.com'
+        )
+        db.session.add(user)
+        db.session.commit()
+    
+    session.permanent = True
+    session['user'] = user.to_dict()
+    
+    return redirect(url_for('main.home'))
+
 @auth_bp.route('/logout')
 def logout():
     """Logout user"""
