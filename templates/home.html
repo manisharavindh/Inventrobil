@@ -3,91 +3,165 @@
 {% block title %}Home - InventroBil{% endblock %}
 
 {% block content %}
-<div>
+<div class="fade-in">
     <!-- Welcome Section -->
-    <div class="alert alert-light">
-        <h1 class="fw-bold">Welcome back, {{ user.username }}!</h1>
-        
-        {% if permissions.view_inventory %}
-        <a href="/inventory" class="btn btn-primary me-2 mb-2">
-            View Inventory
-        </a>
-        {% endif %}
-        
-        {% if permissions.manage_billing %}
-        <a href="/billing" class="btn btn-primary me-2 mb-2">
-            Create Bill
-        </a>
-        {% endif %}
-        
-        {% if permissions.access_settings %}
-        <a href="/settings" class="btn btn-secondary mb-2">
-            Settings
-        </a>
-        {% endif %}
+    <div class="card shadow border-0 rounded-4 mb-4">
+        <div class="card-body p-4">
+            <h1 class="fw-bold text-dark mb-3">Welcome back, {{ user.username }}!</h1>
+
+            <div class="d-flex flex-wrap gap-2">
+                {% if permissions.view_inventory %}
+                <a href="/inventory" class="btn btn-primary rounded-pill px-4">
+                    <i class="bi bi-box-seam me-2"></i>View Inventory
+                </a>
+                {% endif %}
+
+                {% if permissions.manage_billing %}
+                <a href="/billing" class="btn btn-success rounded-pill px-4">
+                    <i class="bi bi-receipt me-2"></i>Create Bill
+                </a>
+                {% endif %}
+
+                {% if permissions.access_settings %}
+                <a href="/settings" class="btn btn-outline-secondary rounded-pill px-4">
+                    <i class="bi bi-gear me-2"></i>Settings
+                </a>
+                {% endif %}
+            </div>
+        </div>
     </div>
 
     <!-- Stats Section -->
-    <div class="row">
+    <div class="row g-4 mb-4">
         <div class="col-md-3">
-            <div class="alert alert-light">
-                <div class="fs-4 fw-bold mb-2">{{ total_products }}</div>
-                <div class="text-muted small">Total Products</div>
+            <div class="card shadow-sm border-0 rounded-4 h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="icon-shape bg-primary bg-opacity-10 text-primary rounded-circle p-3">
+                            <i class="bi bi-box fs-4"></i>
+                        </div>
+                    </div>
+                    <div class="fs-2 fw-bold text-dark mb-1">{{ total_products }}</div>
+                    <div class="text-muted small fw-bold text-uppercase">Total Products</div>
+                </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="alert alert-light">
-                <div class="fs-4 fw-bold mb-2">{{ low_stock_count }}</div>
-                <div class="text-muted small">Low Stock Items</div>
+            <div class="card shadow-sm border-0 rounded-4 h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="icon-shape bg-warning bg-opacity-10 text-warning rounded-circle p-3">
+                            <i class="bi bi-exclamation-triangle fs-4"></i>
+                        </div>
+                    </div>
+                    <div class="fs-2 fw-bold text-dark mb-1">{{ low_stock_count }}</div>
+                    <div class="text-muted small fw-bold text-uppercase">Low Stock Items</div>
+                </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="alert alert-light">
-                <div class="fs-4 fw-bold mb-2">{{ total_transactions }}</div>
-                <div class="text-muted small">Transactions Today</div>
+            <div class="card shadow-sm border-0 rounded-4 h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="icon-shape bg-info bg-opacity-10 text-info rounded-circle p-3">
+                            <i class="bi bi-clock-history fs-4"></i>
+                        </div>
+                    </div>
+                    <div class="fs-2 fw-bold text-dark mb-1">{{ total_transactions }}</div>
+                    <div class="text-muted small fw-bold text-uppercase">Transactions Today</div>
+                </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="alert alert-light">
-                <div class="fs-4 fw-bold mb-2">${{ "%.2f"|format(total_revenue) }}</div>
-                <div class="text-muted small">Total Revenue</div>
+            <div class="card shadow-sm border-0 rounded-4 h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="icon-shape bg-success bg-opacity-10 text-success rounded-circle p-3">
+                            <i class="bi bi-currency-dollar fs-4"></i>
+                        </div>
+                    </div>
+                    <div class="fs-2 fw-bold text-dark mb-1">${{ "%.2f"|format(total_revenue) }}</div>
+                    <div class="text-muted small fw-bold text-uppercase">Total Revenue</div>
+                </div>
             </div>
         </div>
     </div>
-    
+
     <!-- Permissions Info -->
-    <div class="alert alert-light p-4">
-        <h6 class="fw-bold mb-3">Your Permissions</h6>
-        <div class="row">
-            <div class="col-md-6">
-                <div class="d-flex align-items-center mb-2 {% if not permissions.view_inventory %}text-muted{% endif %}">
-                    <span class="badge bg-primary rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 20px; height: 20px; font-size: 11px;">{% if permissions.view_inventory %}✓{% else %}✗{% endif %}</span>
-                    <span>View Inventory</span>
+    <div class="card shadow-sm border-0 rounded-4">
+        <div class="card-header bg-white border-0 py-3">
+            <h6 class="fw-bold mb-0">Your Permissions</h6>
+        </div>
+        <div class="card-body p-4 pt-0">
+            <div class="row">
+                <div class="col-md-6">
+                    <div
+                        class="d-flex align-items-center mb-3 {% if not permissions.view_inventory %}text-muted{% endif %}">
+                        <i
+                            class="bi {% if permissions.view_inventory %}bi-check-circle-fill text-success{% else %}bi-x-circle-fill text-muted{% endif %} me-3 fs-5"></i>
+                        <span class="fw-medium">View Inventory</span>
+                    </div>
+                    <div
+                        class="d-flex align-items-center mb-3 {% if not permissions.edit_inventory %}text-muted{% endif %}">
+                        <i
+                            class="bi {% if permissions.edit_inventory %}bi-check-circle-fill text-success{% else %}bi-x-circle-fill text-muted{% endif %} me-3 fs-5"></i>
+                        <span class="fw-medium">Edit Inventory</span>
+                    </div>
+                    <div
+                        class="d-flex align-items-center mb-3 {% if not permissions.manage_billing %}text-muted{% endif %}">
+                        <i
+                            class="bi {% if permissions.manage_billing %}bi-check-circle-fill text-success{% else %}bi-x-circle-fill text-muted{% endif %} me-3 fs-5"></i>
+                        <span class="fw-medium">Create Billing</span>
+                    </div>
                 </div>
-                <div class="d-flex align-items-center mb-2 {% if not permissions.edit_inventory %}text-muted{% endif %}">
-                    <span class="badge bg-primary rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 20px; height: 20px; font-size: 11px;">{% if permissions.edit_inventory %}✓{% else %}✗{% endif %}</span>
-                    <span>Edit Inventory</span>
-                </div>
-                <div class="d-flex align-items-center mb-2 {% if not permissions.manage_billing %}text-muted{% endif %}">
-                    <span class="badge bg-primary rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 20px; height: 20px; font-size: 11px;">{% if permissions.manage_billing %}✓{% else %}✗{% endif %}</span>
-                    <span>Create Billing</span>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="d-flex align-items-center mb-2 {% if not permissions.view_reports %}text-muted{% endif %}">
-                    <span class="badge bg-primary rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 20px; height: 20px; font-size: 11px;">{% if permissions.view_reports %}✓{% else %}✗{% endif %}</span>
-                    <span>View Reports</span>
-                </div>
-                <div class="d-flex align-items-center mb-2 {% if not permissions.manage_users %}text-muted{% endif %}">
-                    <span class="badge bg-primary rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 20px; height: 20px; font-size: 11px;">{% if permissions.manage_users %}✓{% else %}✗{% endif %}</span>
-                    <span>Manage Users</span>
-                </div>
-                <div class="d-flex align-items-center mb-2 {% if not permissions.access_settings %}text-muted{% endif %}">
-                    <span class="badge bg-primary rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 20px; height: 20px; font-size: 11px;">{% if permissions.access_settings %}✓{% else %}✗{% endif %}</span>
-                    <span>Access Settings</span>
+                <div class="col-md-6">
+                    <div
+                        class="d-flex align-items-center mb-3 {% if not permissions.view_reports %}text-muted{% endif %}">
+                        <i
+                            class="bi {% if permissions.view_reports %}bi-check-circle-fill text-success{% else %}bi-x-circle-fill text-muted{% endif %} me-3 fs-5"></i>
+                        <span class="fw-medium">View Reports</span>
+                    </div>
+                    <div
+                        class="d-flex align-items-center mb-3 {% if not permissions.manage_users %}text-muted{% endif %}">
+                        <i
+                            class="bi {% if permissions.manage_users %}bi-check-circle-fill text-success{% else %}bi-x-circle-fill text-muted{% endif %} me-3 fs-5"></i>
+                        <span class="fw-medium">Manage Users</span>
+                    </div>
+                    <div
+                        class="d-flex align-items-center mb-3 {% if not permissions.access_settings %}text-muted{% endif %}">
+                        <i
+                            class="bi {% if permissions.access_settings %}bi-check-circle-fill text-success{% else %}bi-x-circle-fill text-muted{% endif %} me-3 fs-5"></i>
+                        <span class="fw-medium">Access Settings</span>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    .fade-in {
+        animation: fadeIn 0.5s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .icon-shape {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>
 {% endblock %}

@@ -68,12 +68,15 @@ def add_billing_record():
             p_name = p.name if p else "Unknown Product"
             p_price = p.price if p else 0
             
+            p_unit = p.unit if p else 'pc'
+            
             b_item = BillingItem(
                 billing_id=record.id,
                 product_id=item['id'],
                 product_name=p_name,
                 quantity=item['quantity'],
-                price=p_price
+                price=p_price,
+                unit=p_unit
             )
             db.session.add(b_item)
             # Reconstruct for response to match old format

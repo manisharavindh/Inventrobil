@@ -24,6 +24,7 @@ class Product(db.Model):
     stock = db.Column(db.Integer, default=0)
     price = db.Column(db.Float, nullable=False)
     sku = db.Column(db.String(50), unique=True)
+    unit = db.Column(db.String(20), default='pc')
 
     def to_dict(self):
         return {
@@ -32,7 +33,8 @@ class Product(db.Model):
             'category': self.category,
             'stock': self.stock,
             'price': self.price,
-            'sku': self.sku
+            'sku': self.sku,
+            'unit': self.unit
         }
 
 class BillingRecord(db.Model):
@@ -73,11 +75,13 @@ class BillingItem(db.Model):
     product_name = db.Column(db.String(100)) # Snapshot
     quantity = db.Column(db.Integer)
     price = db.Column(db.Float) # Snapshot price at time of sale
+    unit = db.Column(db.String(20), default='pc')
     
     def to_dict(self):
         return {
             'id': self.product_id, # Frontend expects 'id' to be product id in the items list usually, effectively reconstructing the payload
             'name': self.product_name,
             'quantity': self.quantity,
-            'price': self.price
+            'price': self.price,
+            'unit': self.unit
         }

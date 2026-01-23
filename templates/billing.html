@@ -3,22 +3,24 @@
 {% block title %}Billing - InventroBil{% endblock %}
 
 {% block content %}
-<div class="py-4">
+<div class="fade-in">
     {% if show_alert %}
-    <div class="alert alert-{{ alert_variant }} alert-dismissible fade show" role="alert">
+    <div class="alert alert-{{ alert_variant }} alert-dismissible fade show shadow-sm" role="alert">
         {{ alert_message }}
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
     {% endif %}
 
     <!-- Header Section -->
-    <div class="mb-4">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <div>
-                <h1 class="h2 fw-bold mb-1">Billing</h1>
-                <p class="text-muted mb-0">
-                    <i class="bi bi-clock-history"></i>
-                    <strong>{{ billing_history|length }}</strong> transactions today | cashier: <strong>{{ user.username }}</strong>
+    <div class="card shadow border-0 rounded-4 mb-4">
+        <div class="card-body p-4">
+            <h1 class="fw-bold text-dark mb-3">Billing & Checkout</h1>
+            <div class="d-flex flex-wrap gap-2">
+                <p href="/inventory" class="btn btn-light rounded-pill px-4 mb-0">
+                    <i class="bi bi-box-seam me-2"></i>{{ billing_history|length }} Transactions Today
+                </p>
+                <p href="/billing" class="btn btn-light  rounded-pill px-4 mb-0">
+                    <i class="bi bi-person-circle me-1"></i> Cashier: {{ user.username }}
                 </p>
             </div>
         </div>
@@ -27,46 +29,73 @@
     <!-- Main Content Row -->
     <div class="row g-4">
         <!-- Products Section -->
-        <div class="col-lg-5">
-            <div class="card shadow-sm h-100 border-0">
-                <div class="card-header bg-dark text-white border-0 py-3">
-                    <h5 class="card-title mb-0">
-                        <i class="bi bi-box"></i> Products
-                    </h5>
-                </div>
-                <div class="card-body p-0">
-                    <div class="p-3 border-bottom">
-                        <div class="input-group">
-                            <span class="input-group-text">🔍</span>
-                            <input type="text" class="form-control" placeholder="Search by name or sku..." id="searchBilling" onkeyup="filterBillingProducts()">
-                            <span class="input-group-text"><span id="filteredCount">{{ products|length }}</span>/<span id="totalCount">{{ products|length }}</span></span>
+        <div class="col-lg-7">
+            <div class="card shadow border-0 h-100 rounded-4 overflow-hidden">
+                <div class="card-header bg-white border-bottom py-3">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <h5 class="card-title mb-0 fw-bold text-secondary text-uppercase small">Select Products</h5>
+                        <span class="small text-muted">Showing <span id="filteredCount" class="fw-bold text-dark">{{
+                                products|length }}</span> items</span>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-md-7">
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><i
+                                        class="bi bi-search text-muted"></i></span>
+                                <input type="text" class="form-control bg-light border-start-0 ps-0"
+                                    placeholder="Search product or SKU..." id="searchBilling"
+                                    onkeyup="filterBillingProducts()">
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                            <select class="form-select bg-light" id="filterCategory" onchange="filterBillingProducts()">
+                                <option value="">All Categories</option>
+                                <option value="Plumbing">Plumbing</option>
+                                <option value="Electronics">Electronics</option>
+                                <option value="Hardware">Hardware</option>
+                                <option value="Others">Others</option>
+                            </select>
                         </div>
                     </div>
-
-                    <div id="productsList">
+                </div>
+                <div class="card-body p-0 bg-light">
+                    <div id="productsList" class="row g-3 p-3">
                         {% for product in products %}
-                            {% if product.stock > 0 %}
-                            <div class="list-group-item border-0 border-bottom d-flex justify-content-between align-items-center p-3" data-product-id="{{ product.id }}">
-                                <div class="flex-grow-1">
-                                    <div class="fw-bold">{{ product.name }}</div>
-                                    <small class="text-muted d-block">{{ product.category }}</small>
-                                    <div class="mt-2">
-                                        <span class="badge bg-success">
-                                            <i class="bi bi-tag"></i> ${{ "%.2f"|format(product.price) }}
-                                        </span>
-                                        <span class="badge bg-light text-dark ms-2">
-                                            <i class="bi bi-box"></i> {{ product.stock }}
-                                        </span>
-                                        <span class="badge bg-primary ms-2" id="cartBadge{{ product.id }}" style="display: none;">
-                                            <span id="cartCount{{ product.id }}"></span>
-                                        </span>
+                        {% if product.stock > 0 %}
+                        <div class="col-md-6 product-card" data-product-id="{{ product.id }}"
+                            data-category="{{ product.category|lower }}">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body p-3 d-flex flex-column">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <div>
+                                            <h6 class="fw-bold text-dark mb-1">{{ product.name }}</h6>
+                                            <small class="text-muted">{{ product.sku }}</small>
+                                        </div>
+                                        <span class="badge bg-light text-secondary border">{{ product.category }}</span>
+                                    </div>
+                                    <div class="mt-auto d-flex justify-content-between align-items-end">
+                                        <div>
+                                            <div class="fw-bold text-primary fs-5">${{ "%.2f"|format(product.price) }} /
+                                                {{ product.unit }}
+                                            </div>
+                                            <small class="text-muted">{{ product.stock }} {{
+                                                product.unit|pluralize_unit(product.stock) }}
+                                                available</small>
+                                        </div>
+                                        <button class="btn btn-primary shadow-sm btn-add-cart position-relative"
+                                            onclick="addToCart({{ product.id }}, '{{ product.name }}', {{ product.price }}, {{ product.stock }}, '{{ product.unit }}')">
+                                            <i class="bi bi-plus-lg"></i>
+                                            <span
+                                                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger cart-badge"
+                                                id="cartBadge{{ product.id }}" style="display: none;">
+                                                <span id="cartCount{{ product.id }}">0</span>
+                                            </span>
+                                        </button>
                                     </div>
                                 </div>
-                                <button class="btn btn-success btn-sm ms-2" onclick="addToCart({{ product.id }}, '{{ product.name }}', {{ product.price }}, {{ product.stock }})">
-                                    <i class="bi bi-plus-circle"></i> Add
-                                </button>
                             </div>
-                            {% endif %}
+                        </div>
+                        {% endif %}
                         {% endfor %}
                     </div>
                 </div>
@@ -74,30 +103,32 @@
         </div>
 
         <!-- Bill Section -->
-        <div class="col-lg-7">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-dark text-white border-0 py-3">
-                    <h5 class="card-title mb-0">
-                        <i class="bi bi-receipt"></i> Current Bill
-                    </h5>
+        <div class="col-lg-5">
+            <div class="card shadow border-0 rounded-4">
+                <div class="card-header bg-dark text-white border-0 py-3 rounded-top-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0 fw-bold"><i class="bi bi-receipt me-2"></i>Current Bill</h5>
+                        <span class="badge bg-white text-dark rounded-pill" id="cartItemCountBadge">0 Items</span>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <div id="cartEmpty" class="text-center py-5">
-                        <i class="bi bi-cart-x text-muted" style="font-size: 3rem;"></i>
-                        <p class="text-muted mt-3 mb-0">No items in cart</p>
-                        <p class="text-muted small">Add products to get started</p>
+                <div class="card-body d-flex flex-column p-0">
+                    <div id="cartEmpty" class="text-center py-5 my-auto">
+                        <div class="mb-3">
+                            <i class="bi bi-cart3 text-light display-1" style="color: #e9ecef !important;"></i>
+                        </div>
+                        <p class="text-muted fw-bold mb-0">Your cart is empty</p>
+                        <p class="text-muted small">Select items from the list to start billing</p>
                     </div>
 
-                    <div id="cartContent" style="display: none;">
-                        <div class="table-responsive">
-                            <table class="table table-sm mb-3">
-                                <thead class="table-light border-bottom">
+                    <div id="cartContent" style="display: none;" class="flex-column h-100">
+                        <div class="table-responsive flex-grow-1 p-3" style="max-height: 30vh; overflow-y: auto;">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead class="text-muted small text-uppercase bg-white">
                                     <tr>
                                         <th>Item</th>
                                         <th class="text-center">Qty</th>
-                                        <th class="text-center">Price</th>
-                                        <th class="text-center">Total</th>
-                                        <th class="text-center">Action</th>
+                                        <th class="text-end">Total</th>
+                                        <th></th>
                                     </tr>
                                 </thead>
                                 <tbody id="cartItems">
@@ -106,41 +137,40 @@
                         </div>
 
                         <!-- Totals Section -->
-                        <div class="mb-3">
+                        <div class="p-4 bg-light border-top mt-auto rounded-bottom-4">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="text-muted">Subtotal:</span>
+                                <span class="text-muted">Subtotal</span>
                                 <strong id="subtotal" class="h6 mb-0">$0.00</strong>
                             </div>
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="text-muted">
-                                    Discount:
-                                    <div class="input-group d-inline-flex ms-2" style="width: 80px;">
-                                        <input type="number" class="form-control form-control-sm text-center" id="discountPercent" value="0" onchange="updateBillTotals()" step="1" min="0" max="100">
-                                        <span class="input-group-text input-group-text-sm">%</span>
-                                    </div>
+                                <span class="text-muted d-flex align-items-center">
+                                    Discount
+                                    <input type="number" class="form-control form-control-sm ms-2 text-center"
+                                        id="discountPercent" value="0" onchange="updateBillTotals()" step="1" min="0"
+                                        max="100" style="width: 60px;">
+                                    <span class="ms-1">%</span>
                                 </span>
-                                <strong id="discountAmount" class="h6 mb-0 text-danger">-$0.00</strong>
+                                <strong id="discountAmount" class="h6 mb-0 text-success">-$0.00</strong>
                             </div>
                             <div class="d-flex justify-content-between align-items-center mb-3">
-                                <span class="text-muted">GST (18%):</span>
+                                <span class="text-muted">GST (18%)</span>
                                 <strong id="gstAmount" class="h6 mb-0">$0.00</strong>
                             </div>
-                            <hr>
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <span class="fw-bold">Grand Total:</span>
-                                <strong class="text-success fw-bold mb-0" id="totalAmount">$0.00</strong>
+                            <div
+                                class="d-flex justify-content-between align-items-center mb-4 p-3 bg-white rounded-3 border">
+                                <span class="fw-bold fs-5 text-dark">Total</span>
+                                <strong class="fw-bold fs-4 text-primary" id="totalAmount">$0.00</strong>
                             </div>
-                            <hr>
-                        </div>
 
-                        <!-- Action Buttons -->
-                        <div class="d-flex justify-content-center align-items-center gap-2">
-                            <button class="btn btn-outline-danger w-25" onclick="clearCart()">
-                                <i class="bi bi-trash"></i> Clear Cart
-                            </button>
-                            <button class="btn btn-success fw-bold w-75" onclick="checkout()">
-                                <i class="bi bi-check-circle"></i> Checkout
-                            </button>
+                            <!-- Action Buttons -->
+                            <div class="d-grid gap-2 d-md-flex">
+                                <button class="btn btn-outline-danger flex-grow-1 py-2" onclick="clearCart()">
+                                    <i class="bi bi-trash me-1"></i> Clear
+                                </button>
+                                <button class="btn btn-dark flex-grow-1 py-2 fw-bold" onclick="checkout()">
+                                    Checkout <i class="bi bi-arrow-right ms-1"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -149,22 +179,75 @@
     </div>
 </div>
 
+<style>
+    .text-gradient {
+        background: linear-gradient(45deg, #2c3e50, #3498db);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .fade-in {
+        animation: fadeIn 0.5s ease-in-out;
+    }
+
+    .hover-elevate {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .hover-elevate:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15) !important;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Hide number input spinners */
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+</style>
+
 <script>
     let cart = [];
     const GST_RATE = 18;
-    const products = {{ products|tojson }};
+    const products = {{ products| tojson }};
 
-    function addToCart(id, name, price, stock) {
+    function pluralizeUnit(unit, quantity) {
+        if (quantity == 1) return unit;
+        const plurals = {
+            'pc': 'pcs',
+            'meter': 'meters',
+            'liter': 'liters',
+            'box': 'boxes',
+            'kg': 'kg',
+            'g': 'g'
+        };
+        return plurals[unit] || unit;
+    }
+
+    function addToCart(id, name, price, stock, unit) {
         const existing = cart.find(item => item.id === id);
         if (existing) {
             if (existing.quantity < stock) {
                 existing.quantity++;
             } else {
-                alert(`Cannot add more items. Only ${stock} in stock.`);
+                alert(`Cannot add more items. Only ${stock} ${pluralizeUnit(unit || 'pc', stock)} in stock.`);
                 return;
             }
         } else {
-            cart.push({ id, name, price, quantity: 1, stock });
+            cart.push({ id, name, price, quantity: 1, stock, unit: unit || 'pc' });
         }
         updateCartUI();
     }
@@ -177,11 +260,16 @@
     function updateQuantity(id, quantity) {
         const item = cart.find(item => item.id === id);
         if (!item) return;
-        
-        if (quantity <= 0) {
+
+        // Ensure quantity is treated as a number
+        quantity = parseInt(quantity);
+
+        if (isNaN(quantity) || quantity <= 0) {
             removeFromCart(id);
         } else if (quantity > item.stock) {
-            alert(`Cannot exceed stock. Only ${item.stock} available.`);
+            alert(`Cannot exceed stock. Only ${item.stock} ${pluralizeUnit(item.unit, item.stock)} available.`);
+            item.quantity = item.stock; // Reset to max stock
+            updateCartUI();
         } else {
             item.quantity = quantity;
             updateCartUI();
@@ -189,28 +277,57 @@
     }
 
     function updateCartUI() {
+        const cartEmptyEl = document.getElementById('cartEmpty');
+        const cartContentEl = document.getElementById('cartContent');
+        const badgeEl = document.getElementById('cartItemCountBadge');
+
         if (cart.length === 0) {
-            document.getElementById('cartEmpty').style.display = 'block';
-            document.getElementById('cartContent').style.display = 'none';
+            cartEmptyEl.style.display = 'block';
+
+            // Explicitly remove d-flex to ensure it hides, and set display none
+            cartContentEl.classList.remove('d-flex');
+            cartContentEl.style.display = 'none';
+
+            badgeEl.textContent = '0 Items';
+
+            products.forEach(p => {
+                const badge = document.getElementById(`cartBadge${p.id}`);
+                if (badge) badge.style.display = 'none';
+            });
             return;
         }
 
-        document.getElementById('cartEmpty').style.display = 'none';
-        document.getElementById('cartContent').style.display = 'block';
+        cartEmptyEl.style.display = 'none';
+
+        // Ensure flex layout is active
+        cartContentEl.style.display = 'flex';
+        // Add d-flex class back if it was removed
+        if (!cartContentEl.classList.contains('d-flex')) {
+            cartContentEl.classList.add('d-flex');
+        }
+
+        badgeEl.textContent = `${cart.length} Items`;
 
         const cartItemsHtml = cart.map(item => `
             <tr>
-                <td class="small fw-bold align-middle">${item.name}</td>
+                <td class="small fw-bold text-dark">
+                    ${item.name}
+                    <div class="text-muted" style="font-size: 0.75rem;">$${item.price.toFixed(2)} / ${item.unit}</div>
+                    <div class="text-muted" style="font-size: 0.75rem;">(${item.quantity} ${pluralizeUnit(item.unit, item.quantity)})</div>
+                </td>
                 <td class="text-center">
-                    <div class="input-group input-group-sm" style="width: 100px; margin: 0 auto;">
-                        <button class="btn btn-outline-secondary" onclick="updateQuantity(${item.id}, ${item.quantity - 1})" style="padding: 0.25rem 0.5rem;">−</button>
-                        <input type="number" class="form-control text-center" value="${item.quantity}" onchange="updateQuantity(${item.id}, this.value)">
-                        <button class="btn btn-outline-secondary" onclick="updateQuantity(${item.id}, ${item.quantity + 1})" style="padding: 0.25rem 0.5rem;">+</button>
+                    <div class="input-group input-group-sm flex-nowrap" style="width: 90px;">
+                        <button class="btn btn-outline-secondary px-2" onclick="updateQuantity(${item.id}, ${item.quantity - 1})">-</button>
+                        <input type="number" class="form-control text-center px-1" value="${item.quantity}" onchange="updateQuantity(${item.id}, this.value)">
+                        <button class="btn btn-outline-secondary px-2" onclick="updateQuantity(${item.id}, ${item.quantity + 1})">+</button>
                     </div>
                 </td>
-                <td class="text-center small align-middle">$${item.price.toFixed(2)}</td>
-                <td class="text-center small fw-bold align-middle">$${(item.price * item.quantity).toFixed(2)}</td>
-                <td class="text-center small fw-bold align-middle text-danger" style="cursor: pointer;" onclick="removeFromCart(${item.id})">remove</td>
+                <td class="text-end small fw-bold text-dark">$${(item.price * item.quantity).toFixed(2)}</td>
+                <td class="text-end">
+                    <button class="btn btn-link text-danger p-0" onclick="removeFromCart(${item.id})">
+                        <i class="bi bi-x-circle-fill"></i>
+                    </button>
+                </td>
             </tr>
         `).join('');
 
@@ -222,10 +339,10 @@
             const badge = document.getElementById(`cartBadge${p.id}`);
             const badgeCount = document.getElementById(`cartCount${p.id}`);
             const cartItem = cart.find(item => item.id === p.id);
-            if (cartItem) {
-                badgeCount.textContent = `${cartItem.quantity} in cart`;
+            if (cartItem && badge && badgeCount) {
+                badgeCount.textContent = cartItem.quantity;
                 badge.style.display = 'inline-block';
-            } else {
+            } else if (badge) {
                 badge.style.display = 'none';
             }
         });
@@ -247,16 +364,34 @@
 
     function filterBillingProducts() {
         const search = document.getElementById('searchBilling').value.toLowerCase();
-        const items = document.querySelectorAll('#productsList .list-group-item');
-        
+        const categoryFilter = document.getElementById('filterCategory').value.toLowerCase();
+        const items = document.querySelectorAll('#productsList .product-card');
+        let visibleCount = 0;
+
         items.forEach(item => {
             const productId = item.getAttribute('data-product-id');
             const product = products.find(p => p.id === parseInt(productId));
+            const category = item.getAttribute('data-category') || '';
+
             if (product) {
-                const match = product.name.toLowerCase().includes(search) || product.sku.toLowerCase().includes(search);
-                item.style.display = match ? '' : 'none';
+                const matchSearch = product.name.toLowerCase().includes(search) || product.sku.toLowerCase().includes(search);
+                const matchCategory = categoryFilter === '' || category.includes(categoryFilter);
+
+                if (matchSearch && matchCategory) {
+                    item.style.display = 'block'; // Or whatever grid class it uses, default block for div columns usually works with grid if not d-none
+                    item.parentElement.style.display = ''; // IF col is wrapper
+                    visibleCount++;
+                } else {
+                    item.style.display = 'none';
+                }
             }
         });
+
+        // Fix grid layout issues when filtering: 
+        // Actuallly, with bootstrap row/col, we should hide the `col` div, not the inner card.
+        // My selector above targetted the col-md-6 which has class product-card. So setting display none on it is correct.
+
+        document.getElementById('filteredCount').textContent = visibleCount;
     }
 
     function checkout() {
@@ -301,5 +436,10 @@
             updateCartUI();
         }
     }
+
+    // Initialize UI
+    document.addEventListener('DOMContentLoaded', () => {
+        updateCartUI();
+    });
 </script>
 {% endblock %}

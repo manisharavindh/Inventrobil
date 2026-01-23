@@ -35,13 +35,19 @@ def add_product():
     """Add a new product"""
     data = request.json
     
+    # Check for existing SKU
+    if Product.query.filter_by(sku=data['sku']).first():
+        return jsonify({'error': 'SKU already exists'}), 400
+
     try:
         new_product = Product(
             name=data['name'],
             category=data['category'],
             stock=int(data['stock']),
+
             price=float(data['price']),
-            sku=data['sku']
+            sku=data['sku'],
+            unit=data.get('unit', 'pc')
         )
         db.session.add(new_product)
         db.session.commit()
@@ -60,11 +66,18 @@ def update_product(product_id):
     if not product:
         return jsonify({'error': 'Product not found'}), 404
     
+    # Check for sku uniqueness if it's being changed
+    new_sku = data.get('sku', product.sku)
+    if new_sku != product.sku:
+         if Product.query.filter_by(sku=new_sku).first():
+            return jsonify({'error': 'SKU already exists'}), 400
+
     product.name = data.get('name', product.name)
     product.category = data.get('category', product.category)
     product.stock = int(data.get('stock', product.stock))
     product.price = float(data.get('price', product.price))
-    product.sku = data.get('sku', product.sku)
+    product.sku = new_sku
+    product.unit = data.get('unit', product.unit)
     
     db.session.commit()
     return jsonify(product.to_dict())
@@ -119,7 +132,8 @@ def import_inventory():
                  category=p_data['category'],
                  stock=p_data['stock'],
                  price=p_data['price'],
-                 sku=p_data['sku']
+                 sku=p_data['sku'],
+                 unit=p_data.get('unit', 'pc')
              )
              db.session.add(p)
              count += 1

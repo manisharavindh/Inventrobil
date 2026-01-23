@@ -55,6 +55,27 @@ def create_app(config_class=Config):
         db.create_all()
         create_default_admin(app)
 
+    # Template Filters
+    @app.template_filter('pluralize_unit')
+    def pluralize_unit(unit, quantity):
+        try:
+            qty = float(quantity)
+        except (ValueError, TypeError):
+            return unit
+            
+        if qty == 1:
+            return unit
+            
+        plurals = {
+            'pc': 'pcs',
+            'meter': 'meters',
+            'liter': 'liters',
+            'box': 'boxes',
+            'kg': 'kg', # usually invariant
+            'g': 'g'    # usually invariant
+        }
+        return plurals.get(unit, unit)
+
     return app
 
 def create_default_admin(app):

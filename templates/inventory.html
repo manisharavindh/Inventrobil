@@ -3,216 +3,282 @@
 {% block title %}Inventory - InventroBil{% endblock %}
 
 {% block content %}
-<div>
+<div class="fade-in">
     {% if show_alert %}
-    <div class="alert alert-{{ alert_variant }} alert-dismissible fade show position-fixed bottom-0 end-0 m-3" role="alert" style="z-index: 1050;">
-        {{ alert_message }}
+    <div class="alert alert-{{ alert_variant }} alert-dismissible fade show position-fixed bottom-0 end-0 m-3 shadow-lg"
+        role="alert" style="z-index: 1050; border-radius: 12px;">
+        <i class="bi bi-info-circle-fill me-2"></i>{{ alert_message }}
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
     {% endif %}
 
-    <!-- {% if not can_edit %}
-    <div class="alert alert-light">
-        You are in view only mode. Contact a Manager or Owner to edit inventory.
-    </div>
-    {% endif %} -->
+    <div class="card shadow border-0 rounded-4 mb-4">
+        <div class="card-body p-4">
+            <h1 class="fw-bold text-dark mb-3">Inventory Management</h1>
+            <!-- <p class="text-muted">Manage your stock, prices, and product details.</p> -->
 
-    <div class="alert alert-light">
-        <h1 class=" fw-bold">Inventory Management</h1>
-        <div class="d-flex gap-2">
-            {% if can_edit %}
-            <button class="btn btn-primary rounded" onclick="toggleAddForm()">Add Product</button>
-            <button class="btn btn-secondary rounded" onclick="exportInventory()">Export</button>
-            <button class="btn btn-secondary rounded" onclick="document.getElementById('importFile').click()">Import</button>
-            <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importInventory(event)">
-            {% else %}
-            <button class="btn btn-secondary rounded" onclick="exportInventory()">Export JSON</button>
-            {% endif %}
+            <div class="d-flex flex-wrap gap-2">
+                {% if can_edit %}
+                <button class="btn btn-primary rounded-pill px-4" onclick="toggleAddForm()">
+                    <i class="bi bi-plus-lg me-1"></i> Add Product
+                </button>
+                <button class="btn btn-outline-secondary rounded-pill px-4"
+                    onclick="document.getElementById('importFile').click()">
+                    <i class="bi bi-download me-1"></i> Import
+                </button>
+                <button class="btn btn-outline-secondary rounded-pill px-4" onclick="exportInventory()">
+                    <i class="bi bi-upload me-1"></i> Export
+                </button>
+                <input type="file" id="importFile" accept=".json" style="display: none;"
+                    onchange="importInventory(event)">
+                {% else %}
+                <button class="btn btn-outline-secondary rounded-pill px-4" onclick="exportInventory()">
+                    <i class="bi bi-download me-1"></i> Export JSON
+                </button>
+                {% endif %}
+            </div>
         </div>
     </div>
 
-
-
-    <div class="input-group mb-4">
-        <span class="input-group-text">🔍</span>
-        <input type="text" class="form-control" placeholder="Search by name or sku..." id="searchInventory" onkeyup="filterInventory()">
-        <span class="input-group-text"><span id="filteredCount">{{ products|length }}</span>/<span id="totalCount">{{ products|length }}</span></span>
+    <!-- Filters -->
+    <div class="card shadow-sm border-0 mb-4 rounded-4"
+        style="background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px);">
+        <div class="card-body p-3">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0"><i
+                                class="bi bi-search text-muted"></i></span>
+                        <input type="text" class="form-control border-start-0 ps-0"
+                            placeholder="Search by name or SKU..." id="searchInventory" onkeyup="filterInventory()">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="filterCategory" onchange="filterInventory()">
+                        <option value="">All Categories</option>
+                        <option value="Plumbing">Plumbing</option>
+                        <option value="Electronics">Electronics</option>
+                        <option value="Hardware">Hardware</option>
+                        <option value="Others">Others</option>
+                    </select>
+                </div>
+                <div class="col-md-5 d-flex align-items-center justify-content-md-end text-muted">
+                    <span class="small">Showing <span id="filteredCount" class="fw-bold text-dark">{{ products|length
+                            }}</span> of <span id="totalCount">{{ products|length }}</span> products</span>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="table-responsive">
-        <table class="table table-hover table-striped mb-0">
-            <thead class="table-dark">
-                <tr>
-                    <th>Product Name</th>
-                    <th>Category</th>
-                    <th>SKU</th>
-                    <th>Stock</th>
-                    <th>Price</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody id="inventoryTableBody">
-                {% for product in products %}
-                <tr data-product-id="{{ product.id }}">
-                    <td class="fw-medium text-nowrap">{{ product.name }}</td>
-                    <td class="text-nowrap">{{ product.category }}</td>
-                    <td class="text-nowrap"><code>{{ product.sku }}</code></td>
-                    <td class="text-nowrap">{{ product.stock }}</td>
-                    <td class="fw-medium text-nowrap">${{ "%.2f"|format(product.price) }}</td>
-                    <td class="text-nowrap">
-                        {% if product.stock < 10 %}
-                        <span class="badge bg-danger">Low</span>
-                        {% elif product.stock < 20 %}
-                        <span class="badge bg-warning text-dark">Medium</span>
-                        {% else %}
-                        <span class="badge bg-success">In Stock</span>
-                        {% endif %}
-                    </td>
-                    <td class="text-nowrap">
-                        {% if can_edit %}
-                        <button class="btn btn-sm btn-outline-primary me-2" onclick="editProduct({{ product.id }})">Edit</button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteProduct({{ product.id }}, '{{ product.sku }}')">Delete</button>
-                        {% else %}
-                        <span class="text-muted" style="font-size: 12px;">View Only</span>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="7" class="text-center text-muted py-3">No products found</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <div class="card shadow border-0 rounded-4 overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr class="text-wrap">
+                        <th class="ps-4 py-3 text-uppercase small fw-bold">Product</th>
+                        <th class="py-3 text-uppercase small fw-bold">Category</th>
+                        <th class="py-3 text-uppercase small fw-bold">SKU</th>
+                        <th class="py-3 text-uppercase small fw-bold">Stock</th>
+                        <th class="py-3 text-uppercase small fw-bold">Price</th>
+                        <th class="py-3 text-uppercase small fw-bold">Status</th>
+                        <th class="pe-4 py-3 text-uppercase small fw-bold">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="inventoryTableBody" class="bg-white">
+                    {% for product in products %}
+                    <tr class="product-row text-nowrap" data-product-id="{{ product.id }}">
+                        <td class="ps-4 py-3">
+                            <div class="fw-bold text-dark">{{ product.name }}</div>
+                        </td>
+                        <td class="py-3"><span class="badge bg-light text-secondary border">{{ product.category
+                                }}</span></td>
+                        <td class="py-3"><code class="text-primary">{{ product.sku }}</code></td>
+                        <td class="py-3 fw-medium">{{ product.stock }} {{
+                            product.unit|pluralize_unit(product.stock) }}</td>
+                        <td class="py-3 fw-bold text-dark">${{ "%.2f"|format(product.price) }} / {{
+                            product.unit }}</td>
+                        <td class="py-3">
+                            {% if product.stock < 10 %} <span
+                                class="badge bg-danger-subtle text-danger rounded-pill px-3">Low Stock</span>
+                                {% elif product.stock < 20 %} <span
+                                    class="badge bg-warning-subtle text-warning rounded-pill px-3">Medium</span>
+                                    {% else %}
+                                    <span class="badge bg-success-subtle text-success rounded-pill px-3">In Stock</span>
+                                    {% endif %}
+                        </td>
+                        <td class="pe-4 py-3">
+                            {% if can_edit %}
+                            <button class="btn btn-sm btn-light text-primary rounded-circle shadow-sm me-1"
+                                onclick="editProduct({{ product.id }})" title="Edit">
+                                <i class="bi bi-pencil-fill"></i>
+                            </button>
+                            <button class="btn btn-sm btn-light text-danger rounded-circle shadow-sm"
+                                onclick="deleteProduct({{ product.id }}, '{{ product.sku }}')" title="Delete">
+                                <i class="bi bi-trash-fill"></i>
+                            </button>
+                            {% else %}
+                            <span class="text-muted small">View Only</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <div class="mb-2"><i class="bi bi-box-seam display-4 text-light"></i></div>
+                            No products found in inventory.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
 <!-- Product Modal (Add/Edit) -->
-<div class="modal" id="productModal" tabindex="-1" style="display: none;">
+<div class="modal fade" id="productModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="productModalTitle">Add New Product</h5>
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold" id="productModalTitle">Add New Product</h5>
                 <button type="button" class="btn-close" onclick="closeProductModal()"></button>
             </div>
-            <form onsubmit="handleProductSubmit(event)">
-                <div class="modal-body">
+            <div class="modal-body p-4">
+                <form onsubmit="handleProductSubmit(event)" id="productForm">
                     <div class="mb-3">
-                        <label class="form-label">Product Name</label>
-                        <input type="text" class="form-control" id="productName" placeholder="Product Name" required>
+                        <label class="form-label small text-muted fw-bold">Product Name</label>
+                        <input type="text" class="form-control rounded-3" id="productName"
+                            placeholder="e.g. Copper Pipe" required>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">SKU</label>
-                        <input type="text" class="form-control" id="productSku" placeholder="SKU" required>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted fw-bold">SKU (Unique)</label>
+                            <input type="text" class="form-control rounded-3" id="productSku" placeholder="e.g. CP-001"
+                                required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted fw-bold">Category</label>
+                            <select class="form-select rounded-3" id="productCategory" required>
+                                <option value="Plumbing">Plumbing</option>
+                                <option value="Electronics">Electronics</option>
+                                <option value="Hardware">Hardware</option>
+                                <option value="Others">Others</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Category</label>
-                        <select class="form-select" id="productCategory" required>
-                            <option>Plumbing</option>
-                            <option>Electronics</option>
-                        </select>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted fw-bold">Stock Quantity</label>
+                            <input type="number" class="form-control rounded-3" id="productStock" placeholder="0"
+                                min="0" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted fw-bold">Unit</label>
+                            <select class="form-select rounded-3" id="productUnit" required>
+                                <option value="pc">Piece (pc)</option>
+                                <option value="kg">Kilogram (kg)</option>
+                                <option value="g">Gram (g)</option>
+                                <option value="meter">Meter (m)</option>
+                                <option value="liter">Liter (L)</option>
+                                <option value="box">Box</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Stock</label>
-                        <input type="number" class="form-control" id="productStock" placeholder="Stock" required>
+                    <div class="mb-4">
+                        <label class="form-label small text-muted fw-bold">Price ($)</label>
+                        <input type="number" class="form-control rounded-3" id="productPrice" placeholder="0.00"
+                            step="0.01" min="0" required>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Price ($)</label>
-                        <input type="number" class="form-control" id="productPrice" placeholder="Price" step="0.01" required>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary rounded-3 py-2 fw-bold" type="submit" id="productSubmitBtn">Save
+                            Product</button>
+                        <button type="button" class="btn btn-light rounded-3 py-2 text-muted"
+                            onclick="closeProductModal()">Cancel</button>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="closeProductModal()">Cancel</button>
-                    <button class="btn btn-primary" type="submit" id="productSubmitBtn">Save Product</button>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
     </div>
 </div>
 
 <style>
-    .modal.show {
-        display: block;
-        background-color: rgba(0, 0, 0, 0.5);
+    .text-gradient {
+        background: linear-gradient(45deg, #2c3e50, #3498db);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
     }
 
-    .modal {
-        position: fixed;
-        z-index: 1050;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
+    .fade-in {
+        animation: fadeIn 0.5s ease-in-out;
     }
 
-    .modal-dialog {
-        position: relative;
-        width: 90%;
-        max-width: 500px;
-        margin: auto;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
 
-    .modal-dialog-centered {
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 </style>
-
 
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    let allProducts = {{ products|tojson }};
+    let allProducts = {{ products| tojson }};
     let editingProductId = null;
     let isEditMode = false;
+    const modalElement = document.getElementById('productModal');
+    const modal = new bootstrap.Modal(modalElement);
 
     function toggleAddForm() {
         isEditMode = false;
         editingProductId = null;
         document.getElementById('productModalTitle').textContent = 'Add New Product';
         document.getElementById('productSubmitBtn').textContent = 'Save Product';
-        // Clear the form
-        document.getElementById('productName').value = '';
-        document.getElementById('productSku').value = '';
+        document.getElementById('productForm').reset();
         document.getElementById('productCategory').value = 'Plumbing';
-        document.getElementById('productStock').value = '';
-        document.getElementById('productPrice').value = '';
-        openProductModal();
+        document.getElementById('productUnit').value = 'pc';
+        modal.show();
     }
 
     function openProductModal() {
-        document.getElementById('productModal').style.display = 'block';
-        document.getElementById('productModal').classList.add('show');
+        modal.show();
     }
 
     function closeProductModal() {
-        document.getElementById('productModal').style.display = 'none';
-        document.getElementById('productModal').classList.remove('show');
+        modal.hide();
         isEditMode = false;
         editingProductId = null;
     }
 
     function filterInventory() {
         const search = document.getElementById('searchInventory').value.toLowerCase();
-        const rows = document.querySelectorAll('#inventoryTableBody tr');
+        const categoryFilter = document.getElementById('filterCategory').value.toLowerCase();
+        const rows = document.querySelectorAll('#inventoryTableBody tr.product-row');
         let visibleCount = 0;
-        
+
         rows.forEach(row => {
             const name = row.querySelector('td:nth-child(1)')?.textContent.toLowerCase() || '';
+            const category = row.querySelector('td:nth-child(2)')?.textContent.toLowerCase() || '';
             const sku = row.querySelector('td:nth-child(3)')?.textContent.toLowerCase() || '';
-            const match = name.includes(search) || sku.includes(search);
-            row.style.display = match ? '' : 'none';
-            if (match) visibleCount++;
+
+            const matchesSearch = name.includes(search) || sku.includes(search);
+            const matchesCategory = categoryFilter === '' || category.includes(categoryFilter);
+
+            if (matchesSearch && matchesCategory) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
         });
-        
+
         document.getElementById('filteredCount').textContent = visibleCount;
     }
 
@@ -228,6 +294,7 @@
             document.getElementById('productCategory').value = product.category;
             document.getElementById('productStock').value = product.stock;
             document.getElementById('productPrice').value = product.price;
+            document.getElementById('productUnit').value = product.unit || 'pc';
             openProductModal();
         }
     }
@@ -237,16 +304,13 @@
             fetch(`/api/product/${id}`, { method: 'DELETE' })
                 .then(response => {
                     if (!response.ok) {
-                        return response.json().then(err => {
-                            throw new Error(err.error || 'Error deleting product');
-                        });
+                        throw new Error('Error deleting product');
                     }
                     return response.json();
                 })
                 .then(() => location.reload())
                 .catch(err => {
                     alert('Error deleting product: ' + err.message);
-                    console.error('Delete product error:', err);
                 });
         }
     }
@@ -258,36 +322,42 @@
             sku: document.getElementById('productSku').value,
             category: document.getElementById('productCategory').value,
             stock: parseInt(document.getElementById('productStock').value),
-            price: parseFloat(document.getElementById('productPrice').value)
+            price: parseFloat(document.getElementById('productPrice').value),
+            unit: document.getElementById('productUnit').value
         };
-        
+
         const method = isEditMode ? 'PUT' : 'POST';
         const url = isEditMode ? `/api/product/${editingProductId}` : '/api/product';
-        const errorMsg = isEditMode ? 'Error updating product' : 'Error adding product';
-        
+
         fetch(url, {
             method: method,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(product)
-        }).then(response => {
+        }).then(async response => {
             if (!response.ok) {
-                return response.json().then(err => {
-                    throw new Error(err.error || errorMsg);
-                });
+                const data = await response.json();
+                throw new Error(data.error || 'Operation failed');
             }
             return response.json();
         })
-        .then(() => {
-            closeProductModal();
-            location.reload();
-        })
-        .catch(err => {
-            alert(err.message);
-            console.error('Product operation error:', err);
-        });
+            .then(() => {
+                closeProductModal();
+                location.reload();
+            })
+            .catch(err => {
+                alert(err.message);
+            });
     }
 
     function exportInventory() {
+        const now = new Date();
+        const timestamp = now.getFullYear() + '-' +
+            String(now.getMonth() + 1).padStart(2, '0') + '-' +
+            String(now.getDate()).padStart(2, '0') + '_' +
+            String(now.getHours()).padStart(2, '0') + '-' +
+            String(now.getMinutes()).padStart(2, '0') + '-' +
+            String(now.getSeconds()).padStart(2, '0');
+
         fetch('/api/export')
             .then(r => r.json())
             .then(data => {
@@ -295,7 +365,7 @@
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = url;
-                link.download = `inventory_${new Date().toISOString().split('T')[0]}.json`;
+                link.download = `inventory_export_${timestamp}.json`;
                 link.click();
                 URL.revokeObjectURL(url);
             });
@@ -304,7 +374,7 @@
     function importInventory(e) {
         const file = e.target.files?.[0];
         if (!file) return;
-        
+
         const reader = new FileReader();
         reader.onload = (event) => {
             try {
@@ -314,20 +384,12 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 }).then(() => location.reload())
-                  .catch(err => alert('Error importing inventory'));
+                    .catch(err => alert('Error importing inventory'));
             } catch {
                 alert('Error: Invalid JSON file');
             }
         };
         reader.readAsText(file);
     }
-
-    // Close modal when clicking outside of it
-    window.addEventListener('click', function(event) {
-        const modal = document.getElementById('productModal');
-        if (event.target === modal) {
-            closeProductModal();
-        }
-    });
 </script>
 {% endblock %}
